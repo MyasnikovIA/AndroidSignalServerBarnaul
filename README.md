@@ -23,7 +23,7 @@ http://128.0.24.172:8266/send=DeviceName1&txt=Сообщение для устр
 
 Кроссдоменный запрос через комутатор.
 ```html
-<center>
+<html>
 	<script type="text/javascript" >
 		var xhr = new XMLHttpRequest()
 		xhr.open( 'GET','http://128.0.24.172:8266/pop=test', true )
@@ -37,7 +37,7 @@ http://128.0.24.172:8266/send=DeviceName1&txt=Сообщение для устр
 		}
 		xhr.send()
 	</script>
-</center>
+</html>
 ```
 
 Подключение через ROW socket
