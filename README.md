@@ -21,7 +21,7 @@ http://128.0.24.172:8266/send=DeviceName1&txt=Сообщение для устр
 
 
 
-Кроссдоменный запрос через комутатор.
+Кроссдоменный запрос через JS.
 ```html
 <html>
 	<script type="text/javascript" >
