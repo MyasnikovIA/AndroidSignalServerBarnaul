@@ -5,14 +5,18 @@ import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ProviderInfo;
+import android.content.res.AssetManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Base64;
+import android.util.Log;
+
+import androidx.annotation.RequiresApi;
 
 import net.arnx.jsonic.JSON;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -33,12 +37,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -149,9 +150,9 @@ public class HttpSrv {
 
         public void run() {
             try {
-               if (readInputHeaders()) {
-                   writeResponse();
-               }
+                if (readInputHeaders()) {
+                    writeResponse();
+                }
             } catch (Throwable t) {
             } finally {
                 try {
@@ -204,7 +205,7 @@ public class HttpSrv {
                 }
                 sb.append((char) charInt);
             }
-
+            Log.e("TAG", sb.toString());
             int indLine = 0;
             String htmlQuery = "";
             for (String TitleLine : sb.toString().split("\r\n")) {
@@ -219,13 +220,10 @@ public class HttpSrv {
                         terminalQuery(isr, os, sb.toString());
                         return false;
                     }
-                    if (TitleLine.indexOf("OPTIONS ") != -1) {
-                        System.out.println("---------------------------------");
-                        System.out.println(sb.toString());
-                        System.out.println("---------------------------------");
-                        crossDomain(os);
-                        return false;
-                    }
+                    //if (TitleLine.indexOf("OPTIONS ") != -1) {
+                    //    crossDomain(os);
+                    //    return false;
+                    // }
                     TitleLine = TitleLine.replaceAll("GET /", "");
                     TitleLine = TitleLine.replaceAll("POST /", "");
                     TitleLine = TitleLine.replaceAll(" HTTP/1.1", "");
@@ -256,7 +254,7 @@ public class HttpSrv {
                     }
 
                     if (contentZapros.length() == 0) {
-                        contentZapros = "DefaultHost";
+                        contentZapros = "/index.html";
                     }
                     Headers.put("Zapros", contentZapros);
                     Headers.put("RootPath", sdcard.getAbsolutePath());
@@ -348,10 +346,6 @@ public class HttpSrv {
             //  PrintWriter pw = new PrintWriter(new FileWriter("C:\\Intel\\srvLogInData.xml"));
             //  pw.write(sb.toString());
             //  pw.close();
-            System.out.println("---------------------------------");
-            System.out.println(sb.toString());
-            System.out.println("OK");
-            System.out.println("---------------------------------");
             sb.setLength(0);
 
             return true;
@@ -360,7 +354,9 @@ public class HttpSrv {
 
         /**
          * метод отправки ответа клиенту
+         * https://www.tabnine.com/code/java/methods/android.content.Context/getAssets
          */
+        @RequiresApi(api = Build.VERSION_CODES.KITKAT)
         private void writeResponse() {
             if (socket.isConnected() == false) {
                 return;
@@ -368,10 +364,28 @@ public class HttpSrv {
             PrintStream out = new PrintStream(os);
             System.setOut(out);
             System.setErr(out);
+            HashMap<String, String> jsonObj = new HashMap<String, String>(10, (float) 0.5);
+            if (Headers.containsKey("ListDevice") == true) {
+                Set<String> keys = Sys.DeviceOStream.keySet();
+                jsonObj.put("ok", "true");
+                int ind = 0;
+                for (String key : keys) {
+                    Socket soc = Sys.DeviceSocket.get(key);
+                    if (soc.isConnected()) {
+                        ind++;
+                        jsonObj.put("Dev" + ind, key);
+                    }
+                }
+                Sys.sendJson(jsonObj.toString());
+                return;
+            }
             // String PathStr = Headers.get("AbsalutZapros").toString();
             // оставить сообщение для устройства
             if (Headers.containsKey("push") == true) {
                 String devName = Headers.get("push").toString();
+                if (LocalMessage.containsKey("push") == true) {
+                    LocalMessage.remove("push");
+                }
                 Sys.MESSAGE_LIST.put(devName, JSON.encode(LocalMessage));
                 Sys.sendJson("{\"ok\":true}");
                 return;
@@ -379,6 +393,9 @@ public class HttpSrv {
 
             if (Headers.containsKey("pop") == true) {
                 String devName = Headers.get("pop").toString();
+                if (LocalMessage.containsKey("push") == true) {
+                    LocalMessage.remove("push");
+                }
                 if (Sys.MESSAGE_LIST.containsKey(devName) == true) {
                     Sys.sendJson(Sys.MESSAGE_LIST.get(devName).toString());
                     Sys.MESSAGE_LIST.remove(devName);
@@ -389,6 +406,9 @@ public class HttpSrv {
             }
             if (Headers.containsKey("send") == true) {
                 String devName = Headers.get("send").toString();
+                if (LocalMessage.containsKey("send") == true) {
+                    LocalMessage.remove("send");
+                }
                 if (Sys.DeviceOStream.containsKey(devName) == true) {
                     try {
                         OutputStream osDst = Sys.DeviceOStream.get(devName);
@@ -404,26 +424,51 @@ public class HttpSrv {
                 }
                 return;
             }
-
+            String zapros = Headers.get("Zapros").toString();
+            final AssetManager assets = context.getAssets();
+            try {
+                StringBuffer sbHtml = new StringBuffer();
+                String fileName = Headers.get("Zapros").toString();
+                int indexPath = fileName.lastIndexOf('/');
+                String path = indexPath >= 0 ? fileName.substring(0, indexPath) : "";
+                String fileNameOne = indexPath >= 0 ? fileName.substring(indexPath + 1) : fileName;
+                try {
+                    String[] filelist = assets.list(path);
+                    if (filelist != null) {
+                        for (int j = 0; j < filelist.length; j++) {
+                            String filename = filelist[j];
+                            if (filename.equals(fileNameOne)) {
+                                Sys.sendAssestFile(os, context, zapros);
+                            }
+                        }
+                        return;
+                    }
+                } catch (IOException e) {
+                    Sys.sendJson(e.toString());
+                }
+                Sys.sendJson(sbHtml.toString());
+            } catch (Exception e) {
+                Sys.sendJson(e.toString());
+            }
             Sys.sendJson(JSON.encode(Headers) + "  " + JSON.encode(LocalMessage));
 
-             /*
+            /*
             File pathPege = new File(PathStr);
             if (pathPege.exists() && !pathPege.isDirectory()) {
                 Sys.sendRawFile(pathPege);
             } else {
-                CreateCompId();
                 try {
                     // Headers.put("Zapros", "WebFileManagerApp.htm");
                     if (sendContentProvidr(Headers.get("Zapros").toString()) == false) {
                         Sys.sendListProvider(context, ".htm");
                     }
                 } catch (Exception ex) {
-                    System.out.println("Error" + ex.toString());
+                    Sys.sendJson("Error" + ex.toString());
                 }
                 System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
             }
-            */
+             */
+
         }
 
 
@@ -826,7 +871,7 @@ public class HttpSrv {
                         continue;
 
                     }
-                     // os.write(("==============\r\n|" + sb.toString() + "|\r\n" + Json.toString() + "\r\n===================\r\n").getBytes());
+                    // os.write(("==============\r\n|" + sb.toString() + "|\r\n" + Json.toString() + "\r\n===================\r\n").getBytes());
                     sb.setLength(0);
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -898,7 +943,6 @@ public class HttpSrv {
          */
         public void crossDomain(OutputStream os) {
             try {
-
 
 
                 os.write(("HTTP/1.1 200 OK\n" +

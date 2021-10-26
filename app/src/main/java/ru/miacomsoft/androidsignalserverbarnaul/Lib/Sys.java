@@ -1,7 +1,11 @@
 package ru.miacomsoft.androidsignalserverbarnaul.Lib;
 
 import android.content.Context;
+import android.content.res.AssetManager;
+import android.os.Build;
 
+
+import androidx.annotation.RequiresApi;
 
 import net.arnx.jsonic.JSON;
 
@@ -18,10 +22,12 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
+import java.io.Reader;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
@@ -40,17 +46,16 @@ import java.util.logging.Logger;
  */
 public class Sys {
 
-    public static  HashMap<String, String> MESSAGE_LIST = new HashMap<String, String>(10, (float) 0.5);
+    public static HashMap<String, String> MESSAGE_LIST = new HashMap<String, String>(10, (float) 0.5);
     public static Hashtable<String, Socket> DeviceSocket = new Hashtable<String, Socket>(10, (float) 0.5);
     public static Hashtable<String, InputStreamReader> DeviceIStream = new Hashtable<String, InputStreamReader>(10, (float) 0.5);
     public static Hashtable<String, OutputStream> DeviceOStream = new Hashtable<String, OutputStream>(10, (float) 0.5);
 
 
-
-    public static Hashtable<String, Object> toMap(JSONObject jsonobj)  throws JSONException {
+    public static Hashtable<String, Object> toMap(JSONObject jsonobj) throws JSONException {
         Hashtable<String, Object> map = new Hashtable<String, Object>();
         Iterator<String> keys = jsonobj.keys();
-        while(keys.hasNext()) {
+        while (keys.hasNext()) {
             String key = keys.next();
             Object value = jsonobj.get(key);
             if (value instanceof JSONArray) {
@@ -59,21 +64,22 @@ public class Sys {
                 value = toMap((JSONObject) value);
             }
             map.put(key, value);
-        }   return map;
+        }
+        return map;
     }
 
     public static List<Object> toList(JSONArray array) throws JSONException {
         List<Object> list = new ArrayList<Object>();
-        for(int i = 0; i < array.length(); i++) {
+        for (int i = 0; i < array.length(); i++) {
             Object value = array.get(i);
             if (value instanceof JSONArray) {
                 value = toList((JSONArray) value);
-            }
-            else if (value instanceof JSONObject) {
+            } else if (value instanceof JSONObject) {
                 value = toMap((JSONObject) value);
             }
             list.add(value);
-        }   return list;
+        }
+        return list;
     }
 
     public static void writeFile(Context context, String FileName, HashMap<String, String> msg) {
@@ -148,12 +154,10 @@ public class Sys {
     }
 
 
-
-
     public static void sendJson(String jsonObject) {
         try {
             System.out.write("HTTP/1.1 200 OK\r\n".getBytes());
-        // дата создания в GMT
+            // дата создания в GMT
             DateFormat df = DateFormat.getTimeInstance();
             df.setTimeZone(TimeZone.getTimeZone("GMT"));
             // Длина файла
@@ -166,11 +170,59 @@ public class Sys {
             System.out.write("Connection: close\r\n".getBytes());
             System.out.write("Server: HTMLserver\r\n\r\n".getBytes());
             System.out.write(jsonObject.getBytes(), 0, jsonObject.length());
+            System.out.flush();
             // завершаем соединение
             System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
         } catch (IOException e) {
             e.printStackTrace();
             Logger.getLogger(Sys.class.getName()).log(Level.SEVERE, null, e);
+        }
+    }
+
+
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+    public static void sendAssestFile(OutputStream os, Context context, String zapros) {
+        try {
+            String TypeCont = ContentType(new File(zapros));
+            // Первая строка ответа
+            os.write("HTTP/1.1 200 OK\r\n".getBytes());
+            // Длина файла
+            os.write(("Content-Type: " + TypeCont + "; charset=utf-8\r\n").getBytes());
+            // Остальные заголовки
+            os.write("Access-Control-Allow-Origin: *\r\n".getBytes());
+            os.write("Access-Control-Allow-Credentials: true\r\n".getBytes());
+            os.write("Access-Control-Expose-Headers: FooBar\r\n".getBytes());
+            os.write("Connection: close\r\n".getBytes());
+            os.write("Server: HTMLserver\r\n\r\n".getBytes());
+            if ((TypeCont.equals("text/html"))
+                    || (TypeCont.equals("text/plain"))
+                    || (TypeCont.equals("text/css"))
+                    || (TypeCont.equals("text/xml"))
+                    || (TypeCont.equals("application/x-javascript"))) {
+                // обработка текстового контента
+                int bufferSize = 1024;
+                char[] buffer = new char[bufferSize];
+                StringBuilder out = new StringBuilder();
+                Reader in = new InputStreamReader(context.getAssets().open(zapros), StandardCharsets.UTF_8);
+                for (int numRead; (numRead = in.read(buffer, 0, buffer.length)) > 0; ) {
+                    out.append(buffer, 0, numRead);
+                }
+                // return out.toString();
+                os.write(out.toString().getBytes(), 0, out.toString().getBytes().length);
+            } else {
+                // Отправка бинарного файла
+                InputStream in = context.getAssets().open(zapros);
+                int read;
+                byte[] buffer = new byte[4096];
+                while ((read = in.read(buffer)) > 0) {
+                    os.write(buffer, 0, read);
+                }
+                in.close();
+                os.flush();
+            }
+            System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
+        } catch (IOException ex) {
+            Logger.getLogger(Sys.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -198,15 +250,20 @@ public class Sys {
             System.out.write("Access-Control-Expose-Headers: FooBar\r\n".getBytes());
             System.out.write("Connection: close\r\n".getBytes());
             System.out.write("Server: HTMLserver\r\n\r\n".getBytes());
-            // Сам файл:
-            FileInputStream fis = new FileInputStream(pageFile.getAbsolutePath());
-            int lengRead = 1;
-            byte buf[] = new byte[1024];
-            while ((lengRead = fis.read(buf)) != -1) {
-                System.out.write(buf, 0, lengRead);
+            if (TypeCont.equals("text/html")) {
+
+
+            } else {
+                // Отправка бинарного файла
+                FileInputStream fis = new FileInputStream(pageFile.getAbsolutePath());
+                int lengRead = 1;
+                byte buf[] = new byte[1024];
+                while ((lengRead = fis.read(buf)) != -1) {
+                    System.out.write(buf, 0, lengRead);
+                }
+                // закрыть файл
+                fis.close();
             }
-            // закрыть файл
-            fis.close();
             // завершаем соединение
             System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
         } catch (IOException ex) {

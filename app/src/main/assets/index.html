@@ -1,0 +1,66 @@
+<!--script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script-->
+<br/>
+<br/>
+<hr/>
+<br/><input id="DeviceName" placeholder="Укажите имя устройства от которого будут отправлятся сообщения" style="width:90%"/>
+<br/><input id="SendDeviceName" placeholder="Укажите имя устройства которому будет оставлено сообщение"  style="width:90%"/>
+<br/><textarea id="MessageText" style="width:50%"></textarea>
+<br/><input id="ResSend" placeholder="Результат отправки сообщения"  style="width:90%"/>
+<br/><button onclick="pushMessage()">Отправить сообщение</button>
+<br/>
+<br/>
+<hr/>
+<hr/>
+<hr/>
+<br/>
+<br/><input id="ReadDeviceName" placeholder="Укажите имя устройства от которого будем получать сообщение"  style="width:90%"/>
+<br/><textarea id="MessageTextRead" style="width:50%"></textarea>
+<br/><button onclick="popMessage()">Получить сообщение</button>
+<br/>
+<br/>
+<br/>
+<hr/>
+
+<script>
+
+  var pushMessage = function(){
+        var DeviceName =  document.getElementById('ReadDeviceName').value ;
+        var SendDeviceName =  document.getElementById('SendDeviceName').value ;
+        var MessageText =  document.getElementById('MessageText').value ;
+        var ResSend =  document.getElementById('ResSend') ;
+		var sendObj = {"from": SendDeviceName,"MessageText":MessageText  }
+		var xhr = new XMLHttpRequest();
+		xhr.open( 'POST','http://128.0.24.172:8266/push='+SendDeviceName, true );
+		xhr.onreadystatechange = function() {
+		  if (xhr.readyState != 4) { return; }
+		  if (xhr.status === 200) {
+			console.log('result', xhr.responseText);
+			ResSend.value=xhr.responseText;
+		  } else {
+			console.log('err', xhr.responseText);
+			ResSend.value = xhr.responseText;
+		  }
+		}
+		xhr.send(JSON.stringify(sendObj));
+  }
+  var popMessage = function(){
+        var ReadDeviceName =  document.getElementById('ReadDeviceName').value ;
+        var xhr = new XMLHttpRequest();
+		xhr.open( 'GET','http://128.0.24.172:8266/pop='+ReadDeviceName, true )
+		xhr.onreadystatechange = function() {
+		  if (xhr.readyState != 4) { return; }
+		  if (xhr.status === 200) {
+		    document.getElementById('MessageTextRead').value = xhr.responseText;
+			console.log('result', xhr.responseText);
+		  } else {
+			console.log('err', xhr.responseText);
+		    document.getElementById('MessageTextRead').value = xhr.responseText;
+		  }
+		}
+		xhr.send()
+  }
+
+
+</script>
+
+
