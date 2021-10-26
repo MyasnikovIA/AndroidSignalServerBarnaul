@@ -3,6 +3,7 @@ package ru.miacomsoft.androidsignalserverbarnaul.Lib;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.os.Build;
+import android.util.Log;
 
 
 import androidx.annotation.RequiresApi;
@@ -29,6 +30,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.io.Reader;
 import java.net.Socket;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.util.ArrayList;
@@ -162,7 +164,7 @@ public class Sys {
             df.setTimeZone(TimeZone.getTimeZone("GMT"));
             // Длина файла
             System.out.write(("Content-Length: " + jsonObject.length() + "\r\n").getBytes());
-            System.out.write(("Content-Type: application/x-javascript\r\n").getBytes());
+            System.out.write(("Content-Type: application/x-javascript; charset=utf-8\r\n").getBytes());
             // Остальные заголовки
             System.out.write("Access-Control-Allow-Origin: *\r\n".getBytes());
             System.out.write("Access-Control-Allow-Credentials: true\r\n".getBytes());
@@ -179,6 +181,32 @@ public class Sys {
         }
     }
 
+    public static void sendJson(OutputStream os, String jsonObject) {
+        try {
+            os.write("HTTP/1.1 200 OK\r\n".getBytes());
+            // дата создания в GMT
+            DateFormat df = DateFormat.getTimeInstance();
+            df.setTimeZone(TimeZone.getTimeZone("GMT"));
+            // Длина файла
+            os.write(("Content-Length: " + jsonObject.length() + "\r\n").getBytes());
+            os.write(("Content-Type: application/x-javascript; charset=utf-8\r\n").getBytes());
+            // Остальные заголовки
+            os.write("Access-Control-Allow-Origin: *\r\n".getBytes());
+            os.write("Access-Control-Allow-Credentials: true\r\n".getBytes());
+            os.write("Access-Control-Expose-Headers: FooBar\r\n".getBytes());
+            os.write("Connection: close\r\n".getBytes());
+            os.write("Server: HTMLserver\r\n\r\n".getBytes());
+            Log.d("TAG",jsonObject );
+            os.write(jsonObject.getBytes(Charset.forName("UTF-8")));
+            // os.write(jsonObject.getBytes(), 0, jsonObject.length());
+            os.flush();
+            // завершаем соединение
+            // System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
+        } catch (IOException e) {
+            e.printStackTrace();
+            Logger.getLogger(Sys.class.getName()).log(Level.SEVERE, null, e);
+        }
+    }
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     public static void sendAssestFile(OutputStream os, Context context, String zapros) {

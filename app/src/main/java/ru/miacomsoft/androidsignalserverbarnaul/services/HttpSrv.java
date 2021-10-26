@@ -148,6 +148,7 @@ public class HttpSrv {
             // Adress = Adress.substring(1, Adress.length());
         }
 
+        @RequiresApi(api = Build.VERSION_CODES.KITKAT)
         public void run() {
             try {
                 if (readInputHeaders()) {
@@ -205,7 +206,6 @@ public class HttpSrv {
                 }
                 sb.append((char) charInt);
             }
-            Log.e("TAG", sb.toString());
             int indLine = 0;
             String htmlQuery = "";
             for (String TitleLine : sb.toString().split("\r\n")) {
@@ -376,7 +376,7 @@ public class HttpSrv {
                         jsonObj.put("Dev" + ind, key);
                     }
                 }
-                Sys.sendJson(jsonObj.toString());
+                Sys.sendJson(os, jsonObj.toString());
                 return;
             }
             // String PathStr = Headers.get("AbsalutZapros").toString();
@@ -387,20 +387,16 @@ public class HttpSrv {
                     LocalMessage.remove("push");
                 }
                 Sys.MESSAGE_LIST.put(devName, JSON.encode(LocalMessage));
-                Sys.sendJson("{\"ok\":true}");
+                Sys.sendJson(os, "{\"ok\":true}");
                 return;
             }
-
             if (Headers.containsKey("pop") == true) {
                 String devName = Headers.get("pop").toString();
-                if (LocalMessage.containsKey("push") == true) {
-                    LocalMessage.remove("push");
-                }
                 if (Sys.MESSAGE_LIST.containsKey(devName) == true) {
-                    Sys.sendJson(Sys.MESSAGE_LIST.get(devName).toString());
+                    Sys.sendJson(os, Sys.MESSAGE_LIST.get(devName));
                     Sys.MESSAGE_LIST.remove(devName);
                 } else {
-                    Sys.sendJson("{\"ok\":false,\"error\":\"no message\"}");
+                    Sys.sendJson(os, "{\"ok\":false,\"error\":\"no message\"}");
                 }
                 return;
             }
@@ -414,9 +410,9 @@ public class HttpSrv {
                         OutputStream osDst = Sys.DeviceOStream.get(devName);
                         osDst.write(JSON.encode(LocalMessage).getBytes());
                         osDst.flush();
-                        Sys.sendJson("{\"ok\":true}");
+                        Sys.sendJson(os, "{\"ok\":true}");
                     } catch (IOException e) {
-                        Sys.sendJson("{\"ok\":false,\"error\":\"send " + devName + " error\"}\r\n");
+                        Sys.sendJson(os, "{\"ok\":false,\"error\":\"send " + devName + " error\"}\r\n");
                         e.printStackTrace();
                     }
                 } else {
@@ -467,7 +463,7 @@ public class HttpSrv {
                 }
                 System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
             }
-             */
+            */
 
         }
 
