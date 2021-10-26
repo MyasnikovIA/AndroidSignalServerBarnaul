@@ -27,6 +27,7 @@
     - Добрый день. Это Вася. Мне никто не звонил?
 ```	
 
+<img src="https://github.com/MyasnikovIA/AndroidSignalServerBarnaul/blob/main/img/photo_2021-10-25_21-01-52.jpg?raw=true"/>
 
 Оставить сообщение для устройства с именем "DeviceName1"
 ```
