@@ -216,7 +216,6 @@ public class HttpSrv {
                             && (TitleLine.indexOf("OPTIONS ") == -1)
                     ) {
                         // Если не HTML запрос, тогда обрабатываем как  терминальное подключение
-                        PrintStream out = new PrintStream(os);
                         terminalQuery(isr, os, sb.toString());
                         return false;
                     }
@@ -229,7 +228,6 @@ public class HttpSrv {
                     TitleLine = TitleLine.replaceAll(" HTTP/1.1", "");
                     TitleLine = TitleLine.replaceAll(" HTTP/1.0", "");
                     contentZapros = java.net.URLDecoder.decode(TitleLine, "UTF-8");
-
                     // Json.put("ContentZapros", contentZapros);
                     // System.out.println("=-=" + contentZapros);
                     if (contentZapros.indexOf("?") != -1) {
@@ -441,10 +439,12 @@ public class HttpSrv {
                     }
                 } catch (IOException e) {
                     Sys.sendJson(e.toString());
+                    return;
                 }
                 Sys.sendJson(sbHtml.toString());
             } catch (Exception e) {
                 Sys.sendJson(e.toString());
+                return;
             }
             Sys.sendJson(JSON.encode(Headers) + "  " + JSON.encode(LocalMessage));
 
@@ -735,11 +735,9 @@ public class HttpSrv {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
             Sys.DeviceIStream.put(DeviceNameClient, isr);
             Sys.DeviceOStream.put(DeviceNameClient, os);
             Sys.DeviceSocket.put(DeviceNameClient, socket);
-
             while (socket.isConnected()) {
                 try {
                     int charInt;
@@ -767,7 +765,16 @@ public class HttpSrv {
                         rebootOneDevice(DeviceNameClient);
                         return;
                     }
-
+                    if ((lineOne.indexOf("pop") != -1) && (lineOne.length() == 3)) {
+                        if (Sys.MESSAGE_LIST.containsKey(DeviceNameClient) == true) {
+                            os.write((Sys.MESSAGE_LIST.get(DeviceNameClient) + "\r\n").getBytes());
+                            Sys.MESSAGE_LIST.remove(DeviceNameClient);
+                        } else {
+                            os.write(("{\"ok\":false,\"error\":\"no message\"}\r\n").getBytes());
+                            os.flush();
+                        }
+                        continue;
+                    }
                     if ((lineOne.indexOf("ping") != -1) && (lineOne.length() == 4)) {
                         os.write(("ping\r\n").getBytes());
                         continue;
@@ -811,7 +818,7 @@ public class HttpSrv {
                                 }
                             } else {
                                 nimLine++;
-                                Json.put("line" + nimLine, TitleLine);
+                                Json.put("" + nimLine, TitleLine);
                             }
                         }
                     }
@@ -819,7 +826,8 @@ public class HttpSrv {
                     if (Json.containsKey("push") == true) {
                         Json.put("from", DeviceNameClient);
                         String deviceName = Json.get("push").toString();
-                        Sys.MESSAGE_LIST.put(deviceName, Json.toString());
+                        Json.remove("push");
+                        Sys.MESSAGE_LIST.put(deviceName,JSON.encode(Json));
                         os.write(("{\"ok\":true}\r\n").getBytes());
                         os.flush();
                         continue;
@@ -840,9 +848,10 @@ public class HttpSrv {
                     if (Json.containsKey("send") == true) {
                         Json.put("from", DeviceNameClient);
                         String deviceNameTo = Json.get("send").toString();
+                        Json.remove("send");
                         if (Sys.DeviceOStream.containsKey(deviceNameTo) == true) {
                             OutputStream osDst = Sys.DeviceOStream.get(deviceNameTo);
-                            osDst.write(Json.toString().getBytes());
+                            osDst.write(JSON.encode(Json).getBytes());
                             osDst.flush();
                         } else {
                             os.write(("{\"ok\":false,\"error\":\"device " + deviceNameTo + "not found\"}\r\n").getBytes());
@@ -853,19 +862,19 @@ public class HttpSrv {
                     if (Json.containsKey("stream") == true) {
                         Json.put("from", DeviceNameClient);
                         String deviceNameTo = Json.get("stream").toString();
+                        Json.remove("stream");
                         if (Sys.DeviceOStream.containsKey(deviceNameTo) == true) {
                             OutputStream osDst = Sys.DeviceOStream.get(deviceNameTo);
                             InputStreamReader isDst = Sys.DeviceIStream.get(deviceNameTo);
                             Socket socDst = Sys.DeviceSocket.get(deviceNameTo);
                             dataExchangeTr(socket, isr, os, socDst, isDst, osDst);
-                            osDst.write(Json.toString().getBytes());
+                            osDst.write(JSON.encode(Json).getBytes());
                             osDst.flush();
                         } else {
                             os.write(("{\"ok\":false,\"error\":\"device " + deviceNameTo + "not found\"}\r\n").getBytes());
                             os.flush();
                         }
                         continue;
-
                     }
                     // os.write(("==============\r\n|" + sb.toString() + "|\r\n" + Json.toString() + "\r\n===================\r\n").getBytes());
                     sb.setLength(0);

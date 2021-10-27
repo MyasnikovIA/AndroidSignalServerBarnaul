@@ -248,7 +248,7 @@ public class Sys {
                 in.close();
                 os.flush();
             }
-            System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
+            // System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
         } catch (IOException ex) {
             Logger.getLogger(Sys.class.getName()).log(Level.SEVERE, null, ex);
         }
