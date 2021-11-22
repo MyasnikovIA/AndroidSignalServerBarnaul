@@ -52,6 +52,7 @@ public class Sys {
     public static Hashtable<String, Socket> DeviceSocket = new Hashtable<String, Socket>(10, (float) 0.5);
     public static Hashtable<String, InputStreamReader> DeviceIStream = new Hashtable<String, InputStreamReader>(10, (float) 0.5);
     public static Hashtable<String, OutputStream> DeviceOStream = new Hashtable<String, OutputStream>(10, (float) 0.5);
+    public static Hashtable<String, String> DevicePass = new Hashtable<String, String>(10, (float) 0.5);
 
 
     public static Hashtable<String, Object> toMap(JSONObject jsonobj) throws JSONException {

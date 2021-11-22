@@ -737,10 +737,10 @@ public class HttpSrv {
                 DeviceNameClient =linesArr[0];
             }
             if (linesArr.length>1){
-                DevicePassClient =linesArr[0];
+                DevicePassClient =linesArr[1];
             }
             if (linesArr.length>2){
-                RouterPassClient =linesArr[0];
+                RouterPassClient =linesArr[2];
             }
             //String DeviceNameClient = rowText.replace("\n", "").replace("\r", "");
             try {
@@ -753,6 +753,7 @@ public class HttpSrv {
             Sys.DeviceIStream.put(DeviceNameClient, isr);
             Sys.DeviceOStream.put(DeviceNameClient, os);
             Sys.DeviceSocket.put(DeviceNameClient, socket);
+            Sys.DevicePass.put(DeviceNameClient, DevicePassClient);
             while (socket.isConnected()) {
                 try {
                     int charInt;
@@ -843,6 +844,14 @@ public class HttpSrv {
                         Json.put("from", DeviceNameClient);
                         String deviceName = Json.get("push").toString();
                         Json.remove("push");
+                        // if (Sys.DevicePass.get(deviceName).toString().length()>0){
+                        //     if ((Json.containsKey("pass") == false)||(!DevicePassClient.equals(Json.get("pass").toString()))) {
+                        //         os.write(("{\"ok\":false,\"error\":\"error password \"}\r\n").getBytes());
+                        //         os.flush();
+                        //         sb.setLength(0);
+                        //         continue;
+                        //     }
+                        // }
                         Sys.MESSAGE_LIST.put(deviceName,JSON.encode(Json));
                         os.write(("{\"ok\":true}\r\n").getBytes());
                         os.flush();
@@ -946,6 +955,7 @@ public class HttpSrv {
                     Sys.DeviceOStream.remove(key);
                     Sys.DeviceIStream.remove(key);
                     Sys.DeviceSocket.remove(key);
+                    Sys.DevicePass.remove(key);
                 }
             }
         }
