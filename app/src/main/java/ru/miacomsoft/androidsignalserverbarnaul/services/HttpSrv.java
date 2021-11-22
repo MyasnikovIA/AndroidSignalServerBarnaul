@@ -360,8 +360,8 @@ public class HttpSrv {
                 return;
             }
             PrintStream out = new PrintStream(os);
-            System.setOut(out);
-            System.setErr(out);
+            // System.setOut(out);
+            // System.setErr(out);
             HashMap<String, String> jsonObj = new HashMap<String, String>(10, (float) 0.5);
             if (Headers.containsKey("ListDevice") == true) {
                 Set<String> keys = Sys.DeviceOStream.keySet();
@@ -414,7 +414,7 @@ public class HttpSrv {
                         e.printStackTrace();
                     }
                 } else {
-                    Sys.sendJson("{\"ok\":false,\"error\":\"device " + devName + " not found\"}\r\n");
+                    Sys.sendJson(os,"{\"ok\":false,\"error\":\"device " + devName + " not found\"}\r\n");
                 }
                 return;
             }
@@ -438,15 +438,15 @@ public class HttpSrv {
                         return;
                     }
                 } catch (IOException e) {
-                    Sys.sendJson(e.toString());
+                    Sys.sendJson(os,e.toString());
                     return;
                 }
-                Sys.sendJson(sbHtml.toString());
+                Sys.sendJson(os,sbHtml.toString());
             } catch (Exception e) {
-                Sys.sendJson(e.toString());
+                Sys.sendJson(os,e.toString());
                 return;
             }
-            Sys.sendJson(JSON.encode(Headers) + "  " + JSON.encode(LocalMessage));
+            Sys.sendJson(os,JSON.encode(Headers) + "  " + JSON.encode(LocalMessage));
 
             /*
             File pathPege = new File(PathStr);
@@ -727,7 +727,22 @@ public class HttpSrv {
 
 
         private void terminalQuery(InputStreamReader isr, OutputStream os, String rowText) {
-            String DeviceNameClient = rowText.replace("\n", "").replace("\r", "");
+            String DeviceNameSend="";
+            String DeviceNameClient="";
+            String DevicePassClient="";
+            String RouterPassClient="";
+            rowText = rowText.replace("\n", "");
+            String [] linesArr = rowText.split("\r");
+            if (linesArr.length>0){
+                DeviceNameClient =linesArr[0];
+            }
+            if (linesArr.length>1){
+                DevicePassClient =linesArr[0];
+            }
+            if (linesArr.length>2){
+                RouterPassClient =linesArr[0];
+            }
+            //String DeviceNameClient = rowText.replace("\n", "").replace("\r", "");
             try {
                 os.write(("\r\nWelcom|" + DeviceNameClient + "|\r\n").getBytes());
                 os.flush();
@@ -743,6 +758,7 @@ public class HttpSrv {
                     int charInt;
                     // Читаем заголовок
                     Hashtable<String, Object> Json = new Hashtable<String, Object>(10, (float) 0.5);
+                    Json.clear();
                     StringBuffer sbTmp = new StringBuffer();
                     StringBuffer sb = new StringBuffer();
                     while ((charInt = isr.read()) > 0) {
@@ -830,6 +846,7 @@ public class HttpSrv {
                         Sys.MESSAGE_LIST.put(deviceName,JSON.encode(Json));
                         os.write(("{\"ok\":true}\r\n").getBytes());
                         os.flush();
+                        sb.setLength(0);
                         continue;
                     }
                     // получение сообщения для устройства
@@ -842,13 +859,18 @@ public class HttpSrv {
                             os.write(("{\"ok\":false,\"error\":\"no message\"}\r\n").getBytes());
                             os.flush();
                         }
+                        sb.setLength(0);
                         continue;
                     }
                     // прямая отправка сообщения для устройства, если оно в сети
                     if (Json.containsKey("send") == true) {
-                        Json.put("from", DeviceNameClient);
                         String deviceNameTo = Json.get("send").toString();
                         Json.remove("send");
+                        if (JSON.encode(Json).indexOf("{}") != -1){
+                            continue;
+                        }
+                        DeviceNameSend = deviceNameTo;
+                        Json.put("from", DeviceNameClient);
                         if (Sys.DeviceOStream.containsKey(deviceNameTo) == true) {
                             OutputStream osDst = Sys.DeviceOStream.get(deviceNameTo);
                             osDst.write(JSON.encode(Json).getBytes());
@@ -857,6 +879,7 @@ public class HttpSrv {
                             os.write(("{\"ok\":false,\"error\":\"device " + deviceNameTo + "not found\"}\r\n").getBytes());
                             os.flush();
                         }
+                        sb.setLength(0);
                         continue;
                     }
                     if (Json.containsKey("stream") == true) {
@@ -874,8 +897,25 @@ public class HttpSrv {
                             os.write(("{\"ok\":false,\"error\":\"device " + deviceNameTo + "not found\"}\r\n").getBytes());
                             os.flush();
                         }
+                        sb.setLength(0);
                         continue;
                     }
+
+                    if (DeviceNameSend.length()>0) {
+                        Json.put("from", DeviceNameClient);
+                        Json.remove("send");
+                        if (Sys.DeviceOStream.containsKey(DeviceNameSend) == true) {
+                            OutputStream osDst = Sys.DeviceOStream.get(DeviceNameSend);
+                            osDst.write(JSON.encode(Json).getBytes());
+                            osDst.flush();
+                            sb.setLength(0);
+                        } else {
+                            os.write(("{\"ok\":false,\"error\":\"device " + DeviceNameSend + "not found\"}\r\n").getBytes());
+                            os.flush();
+                        }
+                        continue;
+                    }
+
                     // os.write(("==============\r\n|" + sb.toString() + "|\r\n" + Json.toString() + "\r\n===================\r\n").getBytes());
                     sb.setLength(0);
                 } catch (IOException e) {
