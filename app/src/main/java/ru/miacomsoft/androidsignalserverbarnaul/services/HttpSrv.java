@@ -815,7 +815,7 @@ public class HttpSrv {
                     }
 
                     //  обработка запроса
-                    // парсим входящий заголовок
+                    //  парсим входящий заголовок
                     if ((sb.toString().indexOf("{") != -1) && (sb.toString().indexOf("}") != -1)) {
                         try {
                             JSONObject jsonObject = new JSONObject(sb.toString());
@@ -924,7 +924,6 @@ public class HttpSrv {
                         }
                         continue;
                     }
-
                     // os.write(("==============\r\n|" + sb.toString() + "|\r\n" + Json.toString() + "\r\n===================\r\n").getBytes());
                     sb.setLength(0);
                 } catch (IOException e) {
