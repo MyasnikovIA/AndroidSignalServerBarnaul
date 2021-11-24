@@ -200,6 +200,7 @@ public class Sys {
             Log.d("TAG",jsonObject );
             os.write(jsonObject.getBytes(Charset.forName("UTF-8")));
             // os.write(jsonObject.getBytes(), 0, jsonObject.length());
+            os.write(0);
             os.flush();
             // завершаем соединение
             // System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));

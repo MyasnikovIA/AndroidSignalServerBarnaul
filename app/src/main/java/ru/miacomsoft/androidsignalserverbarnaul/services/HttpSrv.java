@@ -345,7 +345,6 @@ public class HttpSrv {
             //  pw.write(sb.toString());
             //  pw.close();
             sb.setLength(0);
-
             return true;
         }
 
@@ -407,6 +406,7 @@ public class HttpSrv {
                     try {
                         OutputStream osDst = Sys.DeviceOStream.get(devName);
                         osDst.write(JSON.encode(LocalMessage).getBytes());
+                        osDst.write(0);
                         osDst.flush();
                         Sys.sendJson(os, "{\"ok\":true}");
                     } catch (IOException e) {
@@ -495,6 +495,7 @@ public class HttpSrv {
                     os.write("Connection: close\r\n".getBytes());
                     os.write("Server: HTMLserver\r\n\r\n".getBytes());
                     os.write(initWORCSTation.getBytes());
+                    os.write(0);
                     return;
                 } catch (Exception ex) {
                     System.err.println("Error create ID comp:" + ex.toString());
@@ -745,6 +746,7 @@ public class HttpSrv {
             //String DeviceNameClient = rowText.replace("\n", "").replace("\r", "");
             try {
                 os.write(("\r\nWelcom|" + DeviceNameClient + "|\r\n").getBytes());
+                os.write(0);
                 os.flush();
                 rebootOneDevice(DeviceNameClient);
             } catch (IOException e) {
@@ -785,15 +787,18 @@ public class HttpSrv {
                     if ((lineOne.indexOf("pop") != -1) && (lineOne.length() == 3)) {
                         if (Sys.MESSAGE_LIST.containsKey(DeviceNameClient) == true) {
                             os.write((Sys.MESSAGE_LIST.get(DeviceNameClient) + "\r\n").getBytes());
+                            os.write(0);
                             Sys.MESSAGE_LIST.remove(DeviceNameClient);
                         } else {
                             os.write(("{\"ok\":false,\"error\":\"no message\"}\r\n").getBytes());
+                            os.write(0);
                             os.flush();
                         }
                         continue;
                     }
                     if ((lineOne.indexOf("ping") != -1) && (lineOne.length() == 4)) {
                         os.write(("ping\r\n").getBytes());
+                        os.write(0);
                         continue;
                     }
                     // получить список подключенных устройств
@@ -810,6 +815,7 @@ public class HttpSrv {
                                 //DeviceSocket.remove(key);
                             }
                             os.write((")\r\n").getBytes());
+                            os.write(0);
                         }
                         continue;
                     }
@@ -854,6 +860,7 @@ public class HttpSrv {
                         // }
                         Sys.MESSAGE_LIST.put(deviceName,JSON.encode(Json));
                         os.write(("{\"ok\":true}\r\n").getBytes());
+                        os.write(0);
                         os.flush();
                         sb.setLength(0);
                         continue;
@@ -866,6 +873,7 @@ public class HttpSrv {
                             Sys.MESSAGE_LIST.remove(deviceName);
                         } else {
                             os.write(("{\"ok\":false,\"error\":\"no message\"}\r\n").getBytes());
+                            os.write(0);
                             os.flush();
                         }
                         sb.setLength(0);
@@ -883,9 +891,11 @@ public class HttpSrv {
                         if (Sys.DeviceOStream.containsKey(deviceNameTo) == true) {
                             OutputStream osDst = Sys.DeviceOStream.get(deviceNameTo);
                             osDst.write(JSON.encode(Json).getBytes());
+                            osDst.write(0);
                             osDst.flush();
                         } else {
                             os.write(("{\"ok\":false,\"error\":\"device " + deviceNameTo + "not found\"}\r\n").getBytes());
+                            os.write(0);
                             os.flush();
                         }
                         sb.setLength(0);
@@ -901,9 +911,11 @@ public class HttpSrv {
                             Socket socDst = Sys.DeviceSocket.get(deviceNameTo);
                             dataExchangeTr(socket, isr, os, socDst, isDst, osDst);
                             osDst.write(JSON.encode(Json).getBytes());
+                            osDst.write(0);
                             osDst.flush();
                         } else {
                             os.write(("{\"ok\":false,\"error\":\"device " + deviceNameTo + "not found\"}\r\n").getBytes());
+                            os.write(0);
                             os.flush();
                         }
                         sb.setLength(0);
@@ -916,10 +928,12 @@ public class HttpSrv {
                         if (Sys.DeviceOStream.containsKey(DeviceNameSend) == true) {
                             OutputStream osDst = Sys.DeviceOStream.get(DeviceNameSend);
                             osDst.write(JSON.encode(Json).getBytes());
+                            osDst.write(0);
                             osDst.flush();
                             sb.setLength(0);
                         } else {
                             os.write(("{\"ok\":false,\"error\":\"device " + DeviceNameSend + "not found\"}\r\n").getBytes());
+                            os.write(0);
                             os.flush();
                         }
                         continue;
@@ -944,6 +958,7 @@ public class HttpSrv {
                     if (soc.isConnected()) {
                         try {
                             osDst.write(" Kill connect \r\n".getBytes());
+                            osDst.write(0);
                             soc.shutdownInput();
                             soc.shutdownOutput();
                             soc.close();
