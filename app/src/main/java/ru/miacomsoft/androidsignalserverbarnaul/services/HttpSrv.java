@@ -745,7 +745,7 @@ public class HttpSrv {
             }
             //String DeviceNameClient = rowText.replace("\n", "").replace("\r", "");
             try {
-                os.write(("\r\nWelcom|" + DeviceNameClient + "|\r\n").getBytes());
+                os.write(("\r\n{\"Register\":\"" + DeviceNameClient + "\"}\r\n").getBytes());
                 os.write(0);
                 os.flush();
                 rebootOneDevice(DeviceNameClient);
@@ -805,18 +805,18 @@ public class HttpSrv {
                     if ((lineOne.indexOf("list") != -1) && (lineOne.length() == 4)) {
                         Set<String> keys = Sys.DeviceSocket.keySet();
                         os.write(("\r\n").getBytes());
+                        os.write(("[").getBytes());
+                        int ind = 0;
                         for (String key : keys) {
-                            os.write((key + "  (" + key.length() + " ").getBytes());
-                            if (Sys.DeviceSocket.get(key).isConnected()) {
-                                os.write((" connect ").getBytes());
+                            ind++;
+                            if (ind>1) {
+                                os.write((",\""+key + "\"").getBytes());
                             } else {
-                                os.write((" disconnect ").getBytes());
-                                //DeviceIO.remove(key);
-                                //DeviceSocket.remove(key);
+                                os.write(("\""+key + "\"").getBytes());
                             }
-                            os.write((")\r\n").getBytes());
-                            os.write(0);
                         }
+                        os.write(("]\r\n").getBytes());
+                        os.write(0);
                         continue;
                     }
 
@@ -1012,8 +1012,6 @@ public class HttpSrv {
          */
         public void crossDomain(OutputStream os) {
             try {
-
-
                 os.write(("HTTP/1.1 200 OK\n" +
                         "Date: Mon, 01 Dec 2008 00:23:53 GMT\n" +
                         "Server: Apache/2.0.61\n" +
