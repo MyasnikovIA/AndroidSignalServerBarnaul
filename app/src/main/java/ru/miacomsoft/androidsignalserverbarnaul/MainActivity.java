@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.KeyguardManager;
+import android.content.Context;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -11,6 +12,7 @@ import android.os.Bundle;
 import android.os.PowerManager;
 import android.text.format.Formatter;
 import android.util.Log;
+import android.view.WindowManager;
 import android.widget.TextView;
 
 import org.json.JSONException;
@@ -29,14 +31,22 @@ import ru.miacomsoft.androidsignalserverbarnaul.Lib.WebServer;
 public class MainActivity extends AppCompatActivity {
     WebServer webServer;
 
+
+    protected PowerManager.WakeLock mWakeLock;
+
+
     @SuppressLint("MissingPermission")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
-        PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MyApp::MyWakelockTag");
-        wakeLock.acquire();
+
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        final PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        this.mWakeLock = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "MyApp::MyWakelockTag");
+        this.mWakeLock.acquire();
+
         // Разблокировать экран
         KeyguardManager keyguardManager = (KeyguardManager) getSystemService(Activity.KEYGUARD_SERVICE);
         KeyguardManager.KeyguardLock lock = keyguardManager.newKeyguardLock(KEYGUARD_SERVICE);
@@ -337,6 +347,12 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+    @Override
+    public void onDestroy() {
+        this.mWakeLock.release();
+        super.onDestroy();
+    }
+
     /**
      * Функция для обмена данными между потоками
      *

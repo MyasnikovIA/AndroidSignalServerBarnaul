@@ -87,7 +87,7 @@ public class WebServer {
     static public File sdcard;
     private static String IPmac = "";
     private static int numComp = 0;
-    private static DBHelper DB;
+    private static SQLLiteORM DB;
     private CallbackSocketConnect callbackSocketConnect = null;
     private CallbackSocketConnectIO callbackSocketConnectIO = null;
     public CallbackSocketReadHead callbackSocketReadHead = null;
@@ -126,7 +126,7 @@ public class WebServer {
 
     public WebServer(Context context) {
         this.context = context;
-        DB = new DBHelper(context);
+        DB = new SQLLiteORM(context);
     }
 
     /**
@@ -640,7 +640,7 @@ public class WebServer {
      */
     public class TerminalStruct {
 
-        public DBHelper DB;
+        public SQLLiteORM DB;
         public String headText;
         public int countQuery=0;
         public Socket socket;
@@ -656,7 +656,7 @@ public class WebServer {
         JSONArray JSONArr = new JSONArray();
 
 
-        public TerminalStruct(DBHelper DB){
+        public TerminalStruct(SQLLiteORM DB){
             this.DB = DB;
         }
 

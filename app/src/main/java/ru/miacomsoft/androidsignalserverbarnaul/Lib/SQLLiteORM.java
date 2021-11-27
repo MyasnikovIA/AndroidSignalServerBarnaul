@@ -19,6 +19,9 @@ import java.util.Hashtable;
 import java.util.Iterator;
 
 /**
+ *
+ *  Самописная ORM для работы с SQLLite
+ *
  * //  делаем запрос
  * //  SELECT * FROM (   SELECT * FROM "+ TabName +"  ORDER BY id DESC    ) topfunny LIMIT 1;
  * //  String sqlPole = "SELECT * FROM (   SELECT * FROM " + TabName + "  ORDER BY id DESC    ) topfunny LIMIT 1";
@@ -80,12 +83,12 @@ import java.util.Iterator;
  * }
  * Created by Администратор on 06.08.15.
  */
-public class DBHelper extends SQLiteOpenHelper {
+public class SQLLiteORM extends SQLiteOpenHelper {
 
     Context context;
     public String IdRaw = "";
 
-    public DBHelper(Context context) {
+    public SQLLiteORM(Context context) {
         super(context, "AppDB", null, 1);
         this.context = context;
     }
@@ -110,7 +113,7 @@ public class DBHelper extends SQLiteOpenHelper {
         boolean res = false;
         // SELECT count(*) FROM sqlite_master WHERE type='table' AND name='table_name';
         try {
-            DBHelper dbHelper = new DBHelper(context);
+            SQLLiteORM dbHelper = new SQLLiteORM(context);
             SQLiteDatabase db = dbHelper.getWritableDatabase();
             if (dropOldTab == true) {
                 // удаление таблицы
@@ -133,7 +136,7 @@ public class DBHelper extends SQLiteOpenHelper {
      */
     public void dropTable(String TabName) {
         try {
-            DBHelper dbHelper = new DBHelper(context);
+            SQLLiteORM dbHelper = new SQLLiteORM(context);
             SQLiteDatabase db = dbHelper.getWritableDatabase();
             db.execSQL("drop table if exists " + TabName);
             db.close();
@@ -236,7 +239,7 @@ public class DBHelper extends SQLiteOpenHelper {
         boolean ret = false;
         // SELECT count(*) FROM sqlite_master WHERE type='table' AND name='table_name';
         try {
-            DBHelper dbHelper = new DBHelper(context);
+            SQLLiteORM dbHelper = new SQLLiteORM(context);
             SQLiteDatabase db = dbHelper.getWritableDatabase();
             // создаем таблицу если она отсутствует
             db.execSQL(createSqlTabJson(TabName, Tab));
@@ -252,7 +255,7 @@ public class DBHelper extends SQLiteOpenHelper {
         boolean ret = false;
         // SELECT count(*) FROM sqlite_master WHERE type='table' AND name='table_name';
         try {
-            DBHelper dbHelper = new DBHelper(context);
+            SQLLiteORM dbHelper = new SQLLiteORM(context);
             SQLiteDatabase db = dbHelper.getWritableDatabase();
             ContentValues cv = getContentFromHashTabJson(Tab);
             //  внести изменения во все записи
@@ -276,7 +279,7 @@ public class DBHelper extends SQLiteOpenHelper {
         boolean ret = false;
         // SELECT count(*) FROM sqlite_master WHERE type='table' AND name='table_name';
         try {
-            DBHelper dbHelper = new DBHelper(context);
+            SQLLiteORM dbHelper = new SQLLiteORM(context);
             SQLiteDatabase db = dbHelper.getWritableDatabase();
             // создаем таблицу если она отсутствует
             db.execSQL(createSqlTab(TabName, Tab));
@@ -406,7 +409,7 @@ public class DBHelper extends SQLiteOpenHelper {
      */
     public boolean getIsExistTab(String TabName) {
         boolean isExist = false;
-        DBHelper dbHelper = new DBHelper(context);
+        SQLLiteORM dbHelper = new SQLLiteORM(context);
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         Cursor cursor = db.rawQuery("SELECT name FROM sqlite_master WHERE name=\"" + TabName + "\"", null);
         if (cursor.moveToFirst() == true) {
@@ -435,7 +438,7 @@ public class DBHelper extends SQLiteOpenHelper {
         }
         int count = -1;
         try {
-            DBHelper dbHelper = new DBHelper(context);
+            SQLLiteORM dbHelper = new SQLLiteORM(context);
             SQLiteDatabase db = dbHelper.getWritableDatabase();
             Cursor cursor = db.rawQuery("select count(*) from " + TabName, null);
             if (cursor.moveToFirst() == true) {
@@ -451,7 +454,7 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     private Hashtable<String, String> getColumnName(String TabName) {
-        DBHelper dbHelper = new DBHelper(context);
+        SQLLiteORM dbHelper = new SQLLiteORM(context);
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         // получаем список полей
         Hashtable<String, String> pole = new Hashtable<String, String>(10, (float) 0.5);
@@ -559,7 +562,7 @@ public class DBHelper extends SQLiteOpenHelper {
      */
     public Hashtable<Object, Hashtable<String, Object>> getRawList(String TabName, String Where) {
 
-        DBHelper dbHelper = new DBHelper(context);
+        SQLLiteORM dbHelper = new SQLLiteORM(context);
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         // получаем список полей
         Hashtable<String, String> pole = getColumnName(TabName);
@@ -584,7 +587,7 @@ public class DBHelper extends SQLiteOpenHelper {
      * @return
      */
     public JSONArray sql(String sqlQuery, String[] selectionArgs) {
-        DBHelper dbHelper = new DBHelper(context);
+        SQLLiteORM dbHelper = new SQLLiteORM(context);
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         Cursor cursor = db.rawQuery(sqlQuery, selectionArgs);
         return getHashTabFromCursorEny(cursor);
@@ -598,7 +601,7 @@ public class DBHelper extends SQLiteOpenHelper {
      */
     public boolean del(String tabName, int id) {
         try {
-            DBHelper dbHelper = new DBHelper(context);
+            SQLLiteORM dbHelper = new SQLLiteORM(context);
             SQLiteDatabase db = dbHelper.getWritableDatabase();
             String sql = "DELETE FROM " + tabName + " WHERE id = " + id;
             Cursor cursor = db.rawQuery(sql, null);
@@ -611,7 +614,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
 
     public JSONObject getJson(String tabName, int id) {
-        DBHelper dbHelper = new DBHelper(context);
+        SQLLiteORM dbHelper = new SQLLiteORM(context);
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         Cursor cursor = db.rawQuery("select * from " + tabName + " where id=" + id, null);
         final JSONArray tmp = getHashTabFromCursorEny(cursor);
@@ -680,7 +683,7 @@ public class DBHelper extends SQLiteOpenHelper {
      */
     public void delRaw(String TabName, String Where) {
         try {
-            DBHelper dbHelper = new DBHelper(context);
+            SQLLiteORM dbHelper = new SQLLiteORM(context);
             SQLiteDatabase db = dbHelper.getWritableDatabase();
             if (Where.length() > 0) {
                 int clearCount = db.delete(TabName, Where, null);
@@ -702,7 +705,7 @@ public class DBHelper extends SQLiteOpenHelper {
     public void delRawList(String TabName, String Where) {
         int count = -1;
         try {
-            DBHelper dbHelper = new DBHelper(context);
+            SQLLiteORM dbHelper = new SQLLiteORM(context);
             SQLiteDatabase db = dbHelper.getWritableDatabase();
             if (Where.length() > 0) {
                 int delCount = db.delete(TabName, Where, null);
@@ -726,7 +729,7 @@ public class DBHelper extends SQLiteOpenHelper {
      * @param Where
      */
     public void updateRaw(String TabName, Hashtable<String, Object> Tab, String Where) {
-        DBHelper dbHelper = new DBHelper(context);
+        SQLLiteORM dbHelper = new SQLLiteORM(context);
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         //   int updCount = db.update("mytable", cv, "id = ?",  new String[] { id });
         // создаем таблицу если она отсутствует
