@@ -53,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
         lock.disableKeyguard();
 
         TextView text = (TextView) findViewById(R.id.textView);
+        TextView text2 = (TextView) findViewById(R.id.textView2);
         boolean onConnect = false;
         String ipAddress = "";
         WifiConfiguration wifiConfig = new WifiConfiguration();
@@ -250,18 +251,29 @@ public class MainActivity extends AppCompatActivity {
             // обработка HTML запроса (любых не описанных)
             webServer.onPage((JSONObject Head,WebServer.Response res)->{
                 JSONObject jsonObj = new JSONObject();
+                StringBuffer info = new StringBuffer();
+                Set<String> keys = Sys.DeviceOStream.keySet();
+                jsonObj.put("ok", "true");
+                int ind = 0;
+                for (String key : keys) {
+                    Socket soc = Sys.DeviceSocket.get(key);
+                    if (soc.isConnected()) {
+                        ind++;
+                        jsonObj.put("Dev" + ind, key);
+                        info.append(key);
+                        info.append("\n");
+                    }
+                }
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        text2.setText(info.toString());
+                    }
+                });
+
 
                 if (Head.has("ListDevice") == true) {
-                    Set<String> keys = Sys.DeviceOStream.keySet();
-                    jsonObj.put("ok", "true");
-                    int ind = 0;
-                    for (String key : keys) {
-                        Socket soc = Sys.DeviceSocket.get(key);
-                        if (soc.isConnected()) {
-                            ind++;
-                            jsonObj.put("Dev" + ind, key);
-                        }
-                    }
                     res.JSON(jsonObj.toString());
                     return;
                 }
