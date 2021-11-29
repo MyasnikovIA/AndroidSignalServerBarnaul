@@ -30,6 +30,7 @@ import ru.miacomsoft.androidsignalserverbarnaul.Lib.WebServer;
 
 public class MainActivity extends AppCompatActivity {
     WebServer webServer;
+    TextView text2;
 
 
     protected PowerManager.WakeLock mWakeLock;
@@ -53,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
         lock.disableKeyguard();
 
         TextView text = (TextView) findViewById(R.id.textView);
-        TextView text2 = (TextView) findViewById(R.id.textView2);
+        text2 = (TextView) findViewById(R.id.textView2);
         boolean onConnect = false;
         String ipAddress = "";
         WifiConfiguration wifiConfig = new WifiConfiguration();
@@ -97,6 +98,7 @@ public class MainActivity extends AppCompatActivity {
                     Sys.DevicePass.put(term.DeviceNameClient, term.DevicePassClient);
                 } else {
                     String cmd = term.headText.replace("\r","").replace("\n","");
+                    displayLog(cmd);
                     if ((cmd.indexOf("exit") != -1) && (cmd.length() == 4)
                             || (cmd.toString().indexOf("{\"exit\":\"exit\"}") != -1)
                     ) {
@@ -265,12 +267,10 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
 
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        text2.setText(info.toString());
-                    }
-                });
+                // displayLog(info.toString());
+                displayLog(Head.toString());
+
+
 
 
                 if (Head.has("ListDevice") == true) {
@@ -395,6 +395,15 @@ public class MainActivity extends AppCompatActivity {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+    public void displayLog(String msg){
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                text2.setText(msg);
+            }
+        });
+
     }
 
 }

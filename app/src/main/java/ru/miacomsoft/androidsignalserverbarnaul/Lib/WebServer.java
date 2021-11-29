@@ -294,9 +294,12 @@ public class WebServer {
             int charInt;
             InputStreamReader isr = new InputStreamReader(is);
             // Читаем заголовок HTML до двух символов "\n"()
-            while ((charInt = isr.read()) > 0) {
+            while ((charInt = isr.read()) != -1) {
                 if (socket.isConnected() == false) {
                     return false;
+                }
+                if (charInt == 0) {
+                    break; // чтение заголовка окончено
                 }
                 sbTmp.append((char) charInt);
                 if (sbTmp.toString().indexOf("\n") != -1) {
