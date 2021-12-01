@@ -20,6 +20,19 @@ import java.util.Iterator;
 
 /**
  *
+ *         try {
+ *             sqlite = new SQLLiteORM(this);
+ *             if (!sqlite.getIsExistTab("config")) {
+ *                 JSONObject raw = new JSONObject();
+ *                 raw.put("DeviceConnectName", "PowerSW3");
+ *                 sqlite.insertJson("config", raw);
+ *             }
+ *             config = sqlite.getJson("config", 1);
+ *             editTextDeviceName.setText(config.getString("DeviceConnectName"));
+ *         } catch (JSONException e) {
+ *             e.printStackTrace();
+ *         }
+ *
  *  Самописная ORM для работы с SQLLite
  *
  * //  делаем запрос
@@ -27,7 +40,7 @@ import java.util.Iterator;
  * //  String sqlPole = "SELECT * FROM (   SELECT * FROM " + TabName + "  ORDER BY id DESC    ) topfunny LIMIT 1";
  *
  * @code {
- * DBHelper sqlite = new DBHelper(this); // создаем экземпляр класса
+ * SQLLiteORM sqlite = new SQLLiteORM(this); // создаем экземпляр класса
  * sqlite.dropTable("test");             // Удаление таблицы
  * <p>
  * JSONObject raw = new JSONObject();
@@ -235,18 +248,19 @@ public class SQLLiteORM extends SQLiteOpenHelper {
      * @param Tab
      * @return
      */
-    public boolean insertJson(String TabName, JSONObject Tab) {
-        boolean ret = false;
+    public long insertJson(String TabName, JSONObject Tab) {
+        long ret = -1;
         // SELECT count(*) FROM sqlite_master WHERE type='table' AND name='table_name';
         try {
+            String sql = createSqlTabJson(TabName, Tab);
+            // Log.d("MainActivity",sql);
             SQLLiteORM dbHelper = new SQLLiteORM(context);
             SQLiteDatabase db = dbHelper.getWritableDatabase();
             // создаем таблицу если она отсутствует
-            db.execSQL(createSqlTabJson(TabName, Tab));
-            IdRaw = String.valueOf(db.insert(TabName, null, getContentFromHashTabJson(Tab)));
-            ret = true;
+            db.execSQL(sql);
+            ret = db.insert(TabName, null, getContentFromHashTabJson(Tab));
         } catch (Exception ex) {
-            ret = false;
+            ret = -1;
         }
         return ret;
     }
@@ -613,11 +627,12 @@ public class SQLLiteORM extends SQLiteOpenHelper {
     }
 
 
-    public JSONObject getJson(String tabName, int id) {
+    public JSONObject getJson(String TabName, int id) {
         SQLLiteORM dbHelper = new SQLLiteORM(context);
         SQLiteDatabase db = dbHelper.getWritableDatabase();
-        Cursor cursor = db.rawQuery("select * from " + tabName + " where id=" + id, null);
+        Cursor cursor = db.rawQuery("select * from " + TabName + " where id=" + id, null);
         final JSONArray tmp = getHashTabFromCursorEny(cursor);
+        // Log.d("MainActivity",tmp.toString());
         if (tmp.length() > 0) {
             try {
                 return (JSONObject) tmp.get(0);

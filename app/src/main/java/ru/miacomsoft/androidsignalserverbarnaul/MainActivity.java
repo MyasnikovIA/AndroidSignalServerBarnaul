@@ -270,9 +270,6 @@ public class MainActivity extends AppCompatActivity {
                 // displayLog(info.toString());
                 displayLog(Head.toString());
 
-
-
-
                 if (Head.has("ListDevice") == true) {
                     res.JSON(jsonObj.toString());
                     return;
